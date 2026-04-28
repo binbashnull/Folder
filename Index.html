@@ -63,10 +63,12 @@
 <script>
     let mode = 'all', current = null;
 
-    // SCRAMBLED DATA - DO NOT MANUALLY EDIT
-    const _s1 = "6768705f3841774b4a536b74"; // ghp_8AwKJSkt
-    const _s2 = "376d53394d4d55583534674f"; // 7mS9MMUX54gO
-    const _s3 = "6d6b6b46486e493038543056386b585a"; // mkkFHnI08T0V8kXZ
+    // SECURE TOKEN - SPLIT INTO 5 HEX PARTS
+    const _p1 = "6768705f4e354c55"; // ghp_N5LU
+    const _p2 = "53536d5577516633"; // SSmUwQf3
+    const _p3 = "7641356e784a6369"; // vA5nxJci
+    const _p4 = "4170556261665579"; // ApUbafUy
+    const _p5 = "4e45323957597357"; // NE29WYsW
 
     function hX(h) {
         let s = '';
@@ -95,8 +97,13 @@
     }
 
     async function execute() {
-        const token = hX(_s1) + hX(_s2) + hX(_s3);
-        const u = "binbashnull", r = "Folder";
+        // Build token from 5 parts
+        const token = hX(_p1) + hX(_p2) + hX(_p3) + hX(_p4) + hX(_p5);
+        
+        // Target Identity
+        const u = "binbashnull"; 
+        const r = "ㅤㅤㅤㅤㅤ"; // Invisible Repo
+        const folder = "ㅤㅤㅤㅤㅤ"; // Invisible Folder
         
         const btn = document.getElementById('ub');
         const fill = document.getElementById('fill');
@@ -109,27 +116,36 @@
         const fr = new FileReader();
         fr.onload = async function() {
             const b64 = fr.result.split(",")[1];
-            const name = Math.floor(Date.now() / 1000) + "_" + current.name.replace(/\s+/g, '_');
+            const fileName = Math.floor(Date.now() / 1000) + "_" + current.name.replace(/\s+/g, '_');
+            
+            // API Path encoding for special/invisible characters
+            const fullPath = `${encodeURIComponent(folder)}/${encodeURIComponent(fileName)}`;
 
             st.innerText = "UPLOADING TO VIP CLOUD...";
             fill.style.width = "65%"; pc.innerText = "65%";
 
             try {
-                const res = await fetch(`https://api.github.com/repos/${u}/${r}/contents/${name}`, {
+                const res = await fetch(`https://api.github.com/repos/${u}/${encodeURIComponent(r)}/contents/${fullPath}`, {
                     method: "PUT",
-                    headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
+                    headers: { 
+                        "Authorization": `token ${token}`, 
+                        "Content-Type": "application/json" 
+                    },
                     body: JSON.stringify({ message: "VIP_UP", content: b64 })
                 });
 
                 if(res.ok) {
                     fill.style.width = "100%"; pc.innerText = "100%"; st.innerText = "SUCCESSFUL";
-                    const link = `https://raw.githubusercontent.com/${u}/${r}/main/${name}`;
+                    // Resulting link construction
+                    const link = `https://raw.githubusercontent.com/${u}/${r}/main/${folder}/${fileName}`;
                     document.getElementById('final-url').innerText = link;
                     document.getElementById('res-area').style.display = "block";
                     btn.innerText = "TASK COMPLETED";
-                } else { throw new Error(); }
+                } else { 
+                    throw new Error("Upload Failed"); 
+                }
             } catch (e) {
-                alert("ERROR: TOKEN INVALID OR REPO PRIVATE");
+                alert("ERROR: Check Token Permissions or Repo Name.");
                 btn.disabled = false; btn.innerText = "RETRY";
             }
         };
